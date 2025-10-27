@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  email     String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stocks    Stock[]
+
+  @@map("users")
+}
+
+model Stock {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  symbol           String
+  name             String
+  sector           String
+  purchasePrice    Float
+  quantity         Int
+  investment       Float
+  portfolioPercent Float
+  exchange         String
+
+  marketCap        String?
+  peRatioTTM       Float?
+  latestEarnings   Float?
+  revenueTTM       Float?
+  ebitdaTTM        Float?
+  ebitdaPercent    Float?
+  pat              Float?
+  patPercent       Float?
+  cfoMarch24       Float?
+  cfo5Years        Float?
+  freeCashFlow5Years Float?
+  debtToEquity     Float?
+  bookValue        Float?
+  revenueGrowth3Y  Float?
+  ebitdaGrowth3Y   Float?
+  profitGrowth3Y   Float?
+  marketCapGrowth3Y Float?
+  priceToSales     Float?
+  cfoToEbitda      Float?
+  cfoToPat         Float?
+  priceToBook      Float?
+  stage2           String?
+  salePrice        Float?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  priceData        PriceData[]
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@index([sector])
+  @@map("stocks")
+}
+
+model PriceData {
+  id              String   @id @default(uuid())
+  stockId         String
+  stock           Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  currentPrice    Float
+  presentValue    Float
+  gainLoss        Float
+  gainLossPercent Float
+
+  peRatio         Float?
+  dividendYield   Float?
+  dayHigh         Float?
+  dayLow          Float?
+
+  timestamp       DateTime @default(now())
+
+  @@index([stockId, timestamp])
+  @@map("price_data")
+}
+
+model PriceCache {
+  id           String   @id @default(uuid())
+  symbol       String   @unique
+  currentPrice Float
+  peRatio      Float?
+  marketCap    String?
+  cachedAt     DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([symbol, expiresAt])
+  @@map("price_cache")
+}

@@ -1,0 +1,56 @@
+{
+  "name": "portfolio-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dynamic Portfolio Dashboard - Real-time stock tracking with Next.js, NestJS, Prisma, and PostgreSQL",
+  "author": "Zahid Khan (@zahidkhandev)",
+  "license": "MIT",
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --env-mode=loose",
+    "build": "turbo run build --env-mode=loose",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rimraf node_modules",
+    "db:generate": "turbo run db:generate --env-mode=loose",
+    "db:migrate": "turbo run db:migrate --env-mode=loose",
+    "db:push": "turbo run db:push --env-mode=loose",
+    "db:studio": "turbo run db:studio --env-mode=loose",
+    "db:seed": "turbo run db:seed --env-mode=loose",
+    "docker:db:up": "docker compose -f docker/db-docker-compose.yaml up -d",
+    "docker:db:down": "docker compose -f docker/db-docker-compose.yaml down",
+    "docker:db:logs": "docker compose -f docker/db-docker-compose.yaml logs -f",
+    "docker:redis:up": "docker compose -f docker/redis-docker-compose.yaml up -d",
+    "docker:redis:down": "docker compose -f docker/redis-docker-compose.yaml down",
+    "docker:all:up": "npm run docker:db:up && npm run docker:redis:up",
+    "docker:all:down": "npm run docker:db:down && npm run docker:redis:down",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:cov": "turbo run test:cov"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "dotenv-cli": "^10.0.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "date-fns": "^4.1.0",
+    "swr": "^2.3.6"
+  }
+}

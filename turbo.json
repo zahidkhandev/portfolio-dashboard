@@ -1,0 +1,112 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "build/**",
+        "node_modules/.prisma/**",
+        "node_modules/@prisma/**",
+        "tsconfig.tsbuildinfo"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "NODE_ENV",
+        "BACKEND_PORT",
+        "FRONTEND_PORT",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "NEXT_PUBLIC_API_URL",
+        "JWT_SECRET",
+        "JWT_EXPIRATION"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^db:generate"],
+      "env": [
+        "DATABASE_URL",
+        "NODE_ENV",
+        "BACKEND_PORT",
+        "FRONTEND_PORT",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "NEXT_PUBLIC_API_URL",
+        "JWT_SECRET",
+        "JWT_EXPIRATION",
+        "FRONTEND_URL"
+      ]
+    },
+    "start": {
+      "cache": false,
+      "persistent": true,
+      "env": ["DATABASE_URL", "NODE_ENV", "BACKEND_PORT", "FRONTEND_PORT", "NEXT_PUBLIC_API_URL"]
+    },
+    "db:generate": {
+      "cache": true,
+      "outputs": ["node_modules/.prisma/**", "node_modules/@prisma/**"],
+      "env": ["DATABASE_URL"],
+      "persistent": false
+    },
+    "db:migrate": {
+      "cache": false,
+      "dependsOn": ["^db:generate"],
+      "env": ["DATABASE_URL"]
+    },
+    "db:push": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "env": ["DATABASE_URL"]
+    },
+    "db:seed": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "env": ["NODE_ENV"]
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "env": ["DATABASE_URL", "NODE_ENV"]
+    },
+    "clean": {
+      "cache": false
+    }
+  },
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "BACKEND_PORT",
+    "FRONTEND_PORT",
+    "NEXT_PUBLIC_API_URL",
+    "JWT_SECRET",
+    "JWT_EXPIRATION",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "FRONTEND_URL",
+    "CI"
+  ],
+  "globalPassThroughEnv": ["CI", "VERCEL", "VERCEL_ENV", "VERCEL_URL"]
+}
