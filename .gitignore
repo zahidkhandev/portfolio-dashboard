@@ -22,6 +22,9 @@ out
 
 # Prisma
 prisma/migrations
+packages/database/client
+**/prisma/client
+
 
 # Logs
 *.log

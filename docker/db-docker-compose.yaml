@@ -1,24 +1,36 @@
 name: portfolio-dashboard
 
 services:
-  postgres:
+  portfolio-db:
     image: postgres:16-alpine
     container_name: portfolio-db
-    restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '5434:5432'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: portfolio_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - portfolio_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
       interval: 10s
-      timeout: 5s
       retries: 5
+      timeout: 5s
+      start_period: 10s
+    networks:
+      - portfolio_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
 volumes:
-  postgres_data:
+  portfolio_db_data:
     driver: local
+
+networks:
+  portfolio_network:
+    driver: bridge

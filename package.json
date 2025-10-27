@@ -11,34 +11,59 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --env-mode=loose",
-    "build": "turbo run build --env-mode=loose",
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=@repo/backend",
+    "dev:frontend": "turbo run dev --filter=@repo/frontend",
+    "dev:parallel": "turbo run dev --filter=@repo/backend --filter=@repo/frontend",
+
+    "build": "turbo run build",
+    "build:backend": "turbo run build --filter=@repo/backend",
+    "build:frontend": "turbo run build --filter=@repo/frontend",
+
     "start": "turbo run start",
+    "start:backend": "turbo run start --filter=@repo/backend",
+    "start:frontend": "turbo run start --filter=@repo/frontend",
+
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
+
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo run clean && rimraf node_modules",
-    "db:generate": "turbo run db:generate --env-mode=loose",
-    "db:migrate": "turbo run db:migrate --env-mode=loose",
-    "db:push": "turbo run db:push --env-mode=loose",
-    "db:studio": "turbo run db:studio --env-mode=loose",
-    "db:seed": "turbo run db:seed --env-mode=loose",
+    "clean:all": "npm run clean && rimraf **/node_modules **/.turbo **/dist",
+
+    "db:generate": "npm run db:generate --workspace=@repo/database",
+    "db:migrate": "npm run db:migrate --workspace=@repo/database",
+    "db:migrate:create": "npm run db:migrate:create --workspace=@repo/database",
+    "db:push": "npm run db:push --workspace=@repo/database",
+    "db:studio": "npm run db:studio --workspace=@repo/database",
+    "db:seed": "npm run db:seed --workspace=@repo/database",
+    "db:reset": "npm run db:reset --workspace=@repo/database",
+
     "docker:db:up": "docker compose -f docker/db-docker-compose.yaml up -d",
     "docker:db:down": "docker compose -f docker/db-docker-compose.yaml down",
+    "docker:db:restart": "npm run docker:db:down && npm run docker:db:up",
     "docker:db:logs": "docker compose -f docker/db-docker-compose.yaml logs -f",
+    "docker:db:clean": "docker compose -f docker/db-docker-compose.yaml down -v",
+
     "docker:redis:up": "docker compose -f docker/redis-docker-compose.yaml up -d",
     "docker:redis:down": "docker compose -f docker/redis-docker-compose.yaml down",
+    "docker:redis:logs": "docker compose -f docker/redis-docker-compose.yaml logs -f",
+
     "docker:all:up": "npm run docker:db:up && npm run docker:redis:up",
     "docker:all:down": "npm run docker:db:down && npm run docker:redis:down",
+    "docker:all:restart": "npm run docker:all:down && npm run docker:all:up",
+
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "test:cov": "turbo run test:cov"
+    "test:cov": "turbo run test:cov",
+
+    "check": "npm run type-check && npm run lint && npm run format:check",
+    "fix": "npm run lint:fix && npm run format"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "dotenv-cli": "^10.0.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "turbo": "^2.5.8",
