@@ -4,6 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './common/guards/auth';
+import { StockModule } from './stock/stock.module';
+import { PriceCacheModule } from './cache/cache.module';
+import { StockPriceModule } from './stock-price/stock-price.module';
 
 @Module({
   imports: [
@@ -13,6 +16,9 @@ import { AccessTokenGuard } from './common/guards/auth';
     }),
     PrismaModule,
     AuthModule,
+    StockModule,
+    PriceCacheModule,
+    StockPriceModule,
   ],
   providers: [
     {

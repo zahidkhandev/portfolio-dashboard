@@ -37,7 +37,9 @@
         "NEXT_PUBLIC_API_URL",
         "JWT_SECRET",
         "JWT_EXPIRATION",
-        "FRONTEND_URL"
+        "FRONTEND_URL",
+        "HTTP_PROXY",
+        "HTTPS_PROXY"
       ]
     },
     "start": {

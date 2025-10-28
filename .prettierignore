@@ -6,3 +6,4 @@ coverage
 *.lock
 *.log
 .turbo
+*google-finance-HDFCBANK.NS.html

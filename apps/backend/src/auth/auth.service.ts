@@ -13,12 +13,19 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const exists = await this.prisma.user.findUnique({
-      where: { username: dto.username },
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ username: dto.username }, { email: dto.email }],
+      },
     });
 
-    if (exists) {
-      throw new ConflictException('Username already taken');
+    if (existingUser) {
+      if (existingUser.username === dto.username) {
+        throw new ConflictException('Username already taken');
+      }
+      if (existingUser.email === dto.email) {
+        throw new ConflictException('Email already registered');
+      }
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -31,7 +38,14 @@ export class AuthService {
       },
     });
 
-    return this.generateToken(user.id, user.username);
+    const generatedToken = this.generateToken(user.id, user.username);
+
+    return {
+      username: user.username,
+      email: user.email,
+      id: user.id,
+      accessToken: generatedToken,
+    };
   }
 
   async login(dto: LoginDto) {
@@ -48,13 +62,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateToken(user.id, user.username);
+    const generatedToken = this.generateToken(user.id, user.username);
+
+    return {
+      username: user.username,
+      email: user.email,
+      id: user.id,
+      accessToken: generatedToken,
+    };
   }
 
   private generateToken(userId: string, username: string) {
     const payload = { sub: userId, username };
-    return {
-      accessToken: this.jwt.sign(payload),
-    };
+    const accessToken = this.jwt.sign(payload);
+    return accessToken;
   }
 }

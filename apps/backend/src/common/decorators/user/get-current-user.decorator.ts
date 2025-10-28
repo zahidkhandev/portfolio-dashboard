@@ -1,13 +1,22 @@
-
 import type { ExecutionContext } from '@nestjs/common';
 import { createParamDecorator } from '@nestjs/common';
 
+interface User {
+  id: string;
+  username: string;
+  email: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const GetCurrentUser = createParamDecorator(
-  (data: string | undefined, context: ExecutionContext) => {
+  (data: keyof User | undefined, context: ExecutionContext) => {
     const request = context.switchToHttp().getRequest();
+    const user = request.user as User;
+
     if (data) {
-      return request.user[data];
+      return user[data];
     }
-    return request.user;
+    return user;
   },
 );

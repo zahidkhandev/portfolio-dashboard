@@ -10,10 +10,12 @@
       "default": "./client/index.js"
     }
   },
-
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --name auto_migration",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "db:migrate:resolve": "prisma migrate resolve",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
@@ -21,7 +23,6 @@
     "build": "prisma generate",
     "clean": "rimraf client node_modules .turbo"
   },
-
   "dependencies": {
     "@prisma/client": "^6.18.0"
   },
