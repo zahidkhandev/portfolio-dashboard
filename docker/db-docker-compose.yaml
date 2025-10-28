@@ -2,16 +2,16 @@ name: portfolio-dashboard
 
 services:
   portfolio-db:
-    image: postgres:16-alpine
+    image: ${USE_LOCAL_IMAGES:+localhost/library/}postgres:16-alpine
     container_name: portfolio-db
     ports:
-      - '5434:5432'
+      - '${DB_PORT:-5434}:5432'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123}
       POSTGRES_DB: ${POSTGRES_DB:-portfolio}
     volumes:
-      - portfolio_db_data:/var/lib/postgresql/data
+      - ${DB_VOLUME_PATH:-portfolio_db_data}:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
       interval: 10s
@@ -24,8 +24,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 512M
+          cpus: '${DB_CPU_LIMIT:-1}'
+          memory: ${DB_MEMORY_LIMIT:-512M}
 
 volumes:
   portfolio_db_data:
