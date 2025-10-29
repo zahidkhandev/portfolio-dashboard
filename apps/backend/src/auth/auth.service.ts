@@ -72,7 +72,7 @@ export class AuthService {
     };
   }
 
-  private generateToken(userId: string, username: string) {
+  private generateToken(userId: number, username: string) {
     const payload = { sub: userId, username };
     const accessToken = this.jwt.sign(payload);
     return accessToken;

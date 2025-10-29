@@ -1,24 +1,78 @@
 import { Injectable, Logger } from '@nestjs/common';
-import YahooFinance from 'yahoo-finance2';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { PriceCacheService } from '../cache/cache.service';
+import YahooFinance from 'yahoo-finance2';
+
+const USE_PROXY = true;
 
 @Injectable()
 export class StockPriceService {
-  private readonly logger = new Logger(StockPriceService.name);
+  private logger: Logger;
+  private proxyAgent: HttpsProxyAgent<string> | null;
+  private readonly defaultHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  };
+  private readonly defaultTimeout = 15000;
   private yahooFinance: InstanceType<typeof YahooFinance>;
 
   constructor(private cacheService: PriceCacheService) {
-    this.yahooFinance = new YahooFinance();
+    this.logger = new Logger(StockPriceService.name);
+    this.proxyAgent = null;
 
-    const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
-    if (proxyUrl) {
+    if (USE_PROXY) {
+      const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || 'http://127.0.0.1:8080';
       this.logger.log('using proxy: ' + proxyUrl);
+      this.proxyAgent = new HttpsProxyAgent(proxyUrl);
     }
 
-    this.logger.log('service ready');
+    this.yahooFinance = new YahooFinance();
+    // this.logger.log('service ready');
+  }
+
+  private axiosConfig(customHeaders?: Record<string, string>): AxiosRequestConfig {
+    const config: AxiosRequestConfig = {
+      headers: customHeaders || this.defaultHeaders,
+      timeout: this.defaultTimeout,
+    };
+    // console.log(USE_PROXY)
+
+    // console.log(config)
+
+    if (USE_PROXY && this.proxyAgent) {
+      config.httpsAgent = this.proxyAgent;
+      config.proxy = false;
+    }
+
+    return config;
+  }
+
+  private toGoogleSymbol(symbol: string): string {
+    return symbol.replace('.NS', ':NSE').replace('.BO', ':BOM');
+  }
+
+  private parseNumber(text: string | null): number | null {
+    if (!text) return null;
+    const cleaned = text.replace(/[^\d.]/g, '');
+    const val = parseFloat(cleaned);
+    if (isNaN(val)) return null;
+    return val;
+  }
+
+  private findGoogleMetric(cheerio: cheerio.CheerioAPI, label: string): string | null {
+    let value: string | null = null;
+
+    // html('div.P6K39c').each((i, elem) => {
+    cheerio('div.mfs7Fc').each((i, elem) => {
+      if (cheerio(elem).text() === label) {
+        // value = html(elem).closest('div.gyFHrc').find('div.P6K39c').text();
+        value = cheerio(elem).closest('div.gyFHrc').find('div.P6K39c').text();
+        return false;
+      }
+    });
+
+    return value;
   }
 
   async fetchCurrentPrice(symbol: string) {
@@ -42,79 +96,220 @@ export class StockPriceService {
     return null;
   }
 
+  // async getPriceFromGoogle(symbol: string) {
+  //   try {
+  //     const googleSymbol = this.toGoogleSymbol(symbol);
+  //     const url = `https://www.google.com/finance/quote/${googleSymbol}`;
+
+  //     this.logger.log('hitting google: ' + url);
+
+  //     const response = await axios.get(url, this.axiosConfig());
+  //     // console.log(response);
+  //     this.logger.log('got response for ' + symbol);
+
+  //     const doc = cheerio.load(response.data);
+  //     // const priceText = html('div.price').first().text();
+  //     // const priceText = html('div.p29Ibb').first().text();
+  //     // const priceText = html('div.NydbP.VOXKNe').first().text();
+  //     // const priceText = html('div.NydbP.nZQ6l').first().text();
+  //     const priceText = doc('div.YMlKec.fxKbKc').first().text();
+
+  //     this.logger.log('raw price: ' + priceText);
+
+  //     const price = this.parseNumber(priceText) || 0;
+
+  //     if (price === 0) {
+  //       this.logger.warn('price is zero for ' + symbol);
+  //       return null;
+  //     }
+
+  //     // const peRatioText = this.getGoogleMetric(html, 'PE ratio');
+  //     // const peRatioText = this.getGoogleMetric(html, 'ratio');
+  //     const rawPE = this.findGoogleMetric(doc, 'P/E ratio');
+  //     const marketCapString = this.findGoogleMetric(doc, 'Market cap');
+  //     const rawDividend = this.findGoogleMetric(doc, 'Dividend yield');
+  //     const dayHighExtracted = this.findGoogleMetric(doc, 'High');
+  //     const dayLowExtracted = this.findGoogleMetric(doc, 'Low');
+
+  //     this.logger.log('pe=' + rawPE + ', marketCap=' + marketCapString);
+
+  //     const peRatio = this.parseNumber(rawPE);
+  //     const dividend = this.parseNumber(rawDividend);
+
+  //     this.logger.log('saving to cache');
+  //     await this.cacheService.setCache(symbol, price, peRatio, marketCapString);
+
+  //     return {
+  //       symbol,
+  //       currentPrice: price,
+  //       peRatio,
+  //       marketCap: marketCapString,
+  //       cached: false,
+  //       dividendYield: dividend,
+  //       timestamp: new Date(),
+  //       dayHigh: this.parseNumber(dayHighExtracted),
+  //       dayLow: this.parseNumber(dayLowExtracted),
+  //       // avgVolume: this.getGoogleMetric(html, 'Volume'),
+  //       avgVolume: this.findGoogleMetric(doc, 'Avg Volume'),
+  //     };
+  //   } catch (err) {
+  //     const error = err as Error;
+  //     this.logger.error('google failed: ' + error.message);
+  //     return null;
+  //   }
+  // }
+
+  // apps/backend/src/stock-price/stock-price.service.ts - update getPriceFromGoogle
   async getPriceFromGoogle(symbol: string) {
     try {
-      // const yahooSymbol = symbol;
-      const googleSymbol = symbol.replace('.NS', ':NSE').replace('.BO', ':BOM');
-      const url = 'https://www.google.com/finance/quote/' + googleSymbol;
+      const googleSymbol = this.toGoogleSymbol(symbol);
+      const url = `https://www.google.com/finance/quote/${googleSymbol}`;
 
       this.logger.log('hitting google: ' + url);
 
-      const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
-      const config: any = {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-        timeout: 15000,
-      };
-
-      if (proxyUrl) {
-        const agent = new HttpsProxyAgent(proxyUrl);
-        config.httpsAgent = agent;
-        config.proxy = false;
-      }
-
-      const response = await axios.get(url, config);
+      const response = await axios.get(url, this.axiosConfig());
       this.logger.log('got response for ' + symbol);
 
-      const html = cheerio.load(response.data);
+      const doc = cheerio.load(response.data);
+      const priceText = doc('div.YMlKec.fxKbKc').first().text();
 
-      // const priceText = html('div.price').first().text();
-      // const priceText = html('div.p29Ibb').first().text();
-      // const priceText = html('div.NydbP.VOXKNe').first().text();
-      // const priceText = html('div.NydbP.nZQ6l').first().text();
-
-      const priceText = html('div.YMlKec.fxKbKc').first().text();
       this.logger.log('raw price: ' + priceText);
 
-      const cleanedPrice = priceText.replace(/[^\d.]/g, '');
-      const price = cleanedPrice ? parseFloat(cleanedPrice) : 0;
+      const price = this.parseNumber(priceText) || 0;
 
       if (price === 0) {
         this.logger.warn('price is zero for ' + symbol);
         return null;
       }
 
-      const peRatioText = this.getMetric(html, 'P/E ratio');
-      const marketCapText = this.getMetric(html, 'Market cap');
-      const dividendText = this.getMetric(html, 'Dividend yield');
+      const rawPE = this.findGoogleMetric(doc, 'P/E ratio');
+      const marketCapString = this.findGoogleMetric(doc, 'Market cap');
+      const rawDividend = this.findGoogleMetric(doc, 'Dividend yield');
 
-      this.logger.log('pe=' + peRatioText + ', marketCap=' + marketCapText);
+      this.logger.log('pe=' + rawPE + ', marketCap=' + marketCapString + ', div=' + rawDividend);
 
-      let peRatio = null;
-      if (peRatioText) {
-        peRatio = parseFloat(peRatioText.replace(/[^\d.]/g, ''));
-      }
+      const peRatio = this.parseNumber(rawPE);
+      const dividend = this.parseNumber(rawDividend);
 
-      let dividend = null;
-      if (dividendText) {
-        dividend = parseFloat(dividendText.replace(/[^\d.]/g, ''));
+      let dayHigh: number | null = null;
+      let dayLow: number | null = null;
+
+      try {
+        const today = new Date();
+        const todayHistorical = await this.yahooFinance.historical(symbol, {
+          period1: today,
+          period2: today,
+          interval: '1d',
+        });
+
+        if (todayHistorical && todayHistorical.length > 0) {
+          const todayData = todayHistorical[0];
+          dayHigh = todayData.high;
+          dayLow = todayData.low;
+          this.logger.log('yahoo today: high=' + dayHigh + ', low=' + dayLow);
+        }
+      } catch (yahooErr) {
+        this.logger.warn('failed to get today high/low from yahoo');
       }
 
       this.logger.log('saving to cache');
-      await this.cacheService.setCache(symbol, price, peRatio, marketCapText);
+      await this.cacheService.setCache(symbol, price, peRatio, marketCapString, {
+        dividendYield: dividend,
+        dayHigh: dayHigh || null,
+        dayLow: dayLow || null,
+      });
 
       return {
-        symbol: symbol,
+        symbol,
         currentPrice: price,
-        peRatio: peRatio,
-        marketCap: marketCapText,
-        dividendYield: dividend,
+        peRatio,
+        marketCap: marketCapString,
         cached: false,
+        dividendYield: dividend,
+        timestamp: new Date(),
+        dayHigh: dayHigh,
+        dayLow: dayLow,
+        avgVolume: this.findGoogleMetric(doc, 'Avg Volume'),
       };
     } catch (err) {
       const error = err as Error;
-      this.logger.error('failed: ' + error.message);
+      this.logger.error('google failed: ' + error.message);
+      return null;
+    }
+  }
+
+  async fetchCompleteFundamentals(symbol: string, stockData: any) {
+    const priceData = await this.fetchCurrentPrice(symbol);
+    const fundamentalData = await this.fetchFundamentals(symbol);
+
+    return {
+      ...priceData,
+      ...fundamentalData,
+      stockFundamentals: {
+        ebitdaTTM: stockData.ebitdaTTM,
+        ebitdaPercent: stockData.ebitdaPercent,
+        revenueTTM: stockData.revenueTTM,
+        pat: stockData.pat,
+        patPercent: stockData.patPercent,
+        cfoMarch24: stockData.cfoMarch24,
+        cfo5Years: stockData.cfo5Years,
+        freeCashFlow5Years: stockData.freeCashFlow5Years,
+        revenueGrowth3Y: stockData.revenueGrowth3Y,
+        ebitdaGrowth3Y: stockData.ebitdaGrowth3Y,
+        profitGrowth3Y: stockData.profitGrowth3Y,
+        marketCapGrowth3Y: stockData.marketCapGrowth3Y,
+        priceToSales: stockData.priceToSales,
+        cfoToEbitda: stockData.cfoToEbitda,
+        cfoToPat: stockData.cfoToPat,
+      },
+    };
+  }
+
+  async fetchHistoricalPrices(symbol: string, startDate?: Date, endDate?: Date) {
+    this.logger.log('fetching historical data for ' + symbol);
+
+    try {
+      const defaultStart = new Date();
+      defaultStart.setDate(defaultStart.getDate() - 30);
+      const start = startDate || defaultStart;
+      const end = endDate || new Date();
+
+      const daysDiff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+      let interval: '1d' | '1wk' | '1mo' = '1d';
+      if (daysDiff <= 90) {
+        interval = '1d';
+      } else if (daysDiff <= 365) {
+        interval = '1wk';
+      } else {
+        interval = '1mo';
+      }
+
+      this.logger.log(`using interval: ${interval} for ${daysDiff} days`);
+
+      const result = await this.yahooFinance.historical(symbol, {
+        period1: start,
+        period2: end,
+        interval: interval,
+      });
+
+      const historicalData = [];
+      for (const item of result) {
+        historicalData.push({
+          date: item.date,
+          open: item.open,
+          high: item.high,
+          low: item.low,
+          close: item.close,
+          volume: item.volume,
+        });
+      }
+
+      this.logger.log(`fetched ${historicalData.length} data points`);
+
+      return historicalData;
+    } catch (err) {
+      this.logger.error('historical fetch failed: ' + (err as Error).message);
       return null;
     }
   }
@@ -122,16 +317,32 @@ export class StockPriceService {
   async fetchFundamentals(symbol: string) {
     this.logger.log('getting fundamentals for ' + symbol);
 
+    const cached = await this.getFundamentalsFromCache(symbol);
+    if (cached) {
+      this.logger.log('got fundamentals from cache: ' + symbol);
+      return { ...cached, cached: true };
+    }
+
     try {
-      const data = await this.parseGoogle(symbol);
-      if (!data) {
+      const googleSymbol = this.toGoogleSymbol(symbol);
+
+      const [googleData, yahooData] = await Promise.all([
+        this.parseGoogle(googleSymbol),
+        this.parseYahoo(symbol),
+      ]);
+
+      if (!googleData && !yahooData) {
         this.logger.warn('no data found');
         return null;
       }
-      return data;
-    } catch (err) {
-      const error = err as Error;
-      this.logger.error('fundamentals failed: ' + error.message);
+
+      const fundamentals = { ...googleData, ...yahooData };
+
+      await this.saveFundamentalsToCache(symbol, fundamentals);
+
+      return { ...fundamentals, cached: false };
+    } catch (err: any) {
+      this.logger.error(`fundamentals failed: ${err.message}`);
       return null;
     }
   }
@@ -140,13 +351,13 @@ export class StockPriceService {
     this.logger.log('batch fetch for ' + symbols.length + ' stocks');
     const results = [];
 
-    for (let i = 0; i < symbols.length; i++) {
-      const priceData = await this.fetchCurrentPrice(symbols[i]);
+    for (const symbol of symbols) {
+      const priceData = await this.fetchCurrentPrice(symbol);
       if (priceData) {
         results.push(priceData);
       }
       // await this.wait(100);
-      await this.wait(200);
+      await new Promise(r => setTimeout(r, 200));
     }
 
     this.logger.log('batch done: ' + results.length + '/' + symbols.length);
@@ -156,39 +367,147 @@ export class StockPriceService {
   async getFromCache(symbol: string) {
     const cached = await this.cacheService.getCached(symbol);
 
-    if (cached) {
-      const age = Math.floor((Date.now() - new Date(cached.cachedAt).getTime()) / 1000);
-      this.logger.log('cache age: ' + age + 's');
+    if (!cached) return null;
 
-      return {
-        symbol: cached.symbol,
-        currentPrice: cached.currentPrice,
-        peRatio: cached.peRatio,
-        marketCap: cached.marketCap,
-        cached: true,
-      };
+    const now = Date.now();
+    const cachedTime = new Date(cached.cachedAt).getTime();
+    const age = Math.floor((now - cachedTime) / 1000);
+    this.logger.log('cache age: ' + age + 's');
+
+    // return {
+    //   symbol: cached.symbol,
+    //   currentPrice: cached.currentPrice,
+    //   peRatio: cached.peRatio,
+    //   marketCap: cached.marketCap,
+    //   cached: true,
+    // };
+
+    return {
+      symbol: cached.symbol,
+      currentPrice: cached.currentPrice,
+      peRatio: cached.peRatio,
+      marketCap: cached.marketCap,
+      dividendYield: cached.dividendYield,
+      dayHigh: cached.dayHigh,
+      dayLow: cached.dayLow,
+      avgVolume: cached.avgVolume,
+      timestamp: cached.cachedAt,
+      cached: true,
+    };
+  }
+
+  async getFundamentalsFromCache(symbol: string) {
+    const cached = await this.cacheService.getCached(symbol);
+
+    if (!cached) {
+      return null;
     }
 
-    return null;
+    const ageInSeconds = Math.floor((Date.now() - new Date(cached.cachedAt).getTime()) / 1000);
+    this.logger.log('fundamentals cache age: ' + ageInSeconds + 's');
+
+    return {
+      peRatio: cached.peRatio,
+      dividendYield: cached.dividendYield,
+      prevClose: cached.prevClose,
+      dayRange: cached.dayRange,
+      yearRange: cached.yearRange,
+      marketCap: cached.marketCap,
+      avgVolume: cached.avgVolume,
+      peRatioTTM: cached.peRatioTTM,
+      priceToBook: cached.priceToBook,
+      bookValue: cached.bookValue,
+      debtToEquity: cached.debtToEquity,
+      revenueTTM: cached.revenueTTM,
+      ebitdaTTM: cached.ebitdaTTM,
+      profitMargin: cached.profitMargin,
+      operatingMargin: cached.operatingMargin,
+      returnOnEquity: cached.returnOnEquity,
+      returnOnAssets: cached.returnOnAssets,
+      sector: cached.sector,
+      industry: cached.industry,
+    };
+  }
+
+  async saveFundamentalsToCache(symbol: string, data: any) {
+    await this.cacheService.setCache(symbol, data.currentPrice || 0, data.peRatio, data.marketCap, {
+      dividendYield: data.dividendYield,
+      dayHigh: data.dayHigh,
+      dayLow: data.dayLow,
+      avgVolume: data.avgVolume,
+      peRatioTTM: data.peRatioTTM,
+      priceToBook: data.priceToBook,
+      bookValue: data.bookValue,
+      debtToEquity: data.debtToEquity,
+      revenueTTM: data.revenueTTM,
+      ebitdaTTM: data.ebitdaTTM,
+      profitMargin: data.profitMargin,
+      operatingMargin: data.operatingMargin,
+      returnOnEquity: data.returnOnEquity,
+      returnOnAssets: data.returnOnAssets,
+      sector: data.sector,
+      industry: data.industry,
+      prevClose: data.prevClose,
+      dayRange: data.dayRange,
+      yearRange: data.yearRange,
+    });
   }
 
   async parseYahoo(symbol: string) {
-    this.logger.log('trying yahoo');
+    this.logger.log('trying yahoo finance2');
 
     try {
+      // import yahooFinance from 'yahoo-finance2';
+      // await yahooFinance.quoteSummary(symbol, {
+      //   modules: [
+      //     'summaryDetail',
+      //     'defaultKeyStatistics',
+      //     'financialData',
+      //     'price',
+      //     'summaryProfile',
+      //     'assetProfile',
+      //   ],
+      // });
+      // const result = await this.yahooFinance.quoteSummary(symbol, {
+      //   modules: ['summaryDetail', 'defaultKeyStatistics'],
+      // });
+
       const result = await this.yahooFinance.quoteSummary(symbol, {
-        modules: ['summaryDetail', 'defaultKeyStatistics', 'financialData'],
+        modules: [
+          'summaryDetail',
+          'defaultKeyStatistics',
+          'financialData',
+          'price',
+          'summaryProfile',
+          'assetProfile',
+          // 'balanceSheetHistory',
+          // 'cashflowStatementHistory',
+          // 'incomeStatementHistory',
+        ],
       });
 
       const data = {
+        // marketCap: result.summaryDetail?.marketCap?.toString() || null,
         marketCap: result.price?.marketCap?.toString() || null,
         peRatioTTM: result.summaryDetail?.trailingPE || null,
         priceToBook: result.defaultKeyStatistics?.priceToBook || null,
         bookValue: result.defaultKeyStatistics?.bookValue || null,
+        // debtToEquity: result.defaultKeyStatistics?.debtToEquity || null,
         debtToEquity: result.financialData?.debtToEquity || null,
+        // revenueTTM: result.financialData?.revenue || null,
         revenueTTM: result.financialData?.totalRevenue || null,
         ebitdaTTM: result.financialData?.ebitda || null,
+        profitMargin: result.financialData?.profitMargins || null,
+        operatingMargin: result.financialData?.operatingMargins || null,
+        returnOnEquity: result.financialData?.returnOnEquity || null,
+        returnOnAssets: result.financialData?.returnOnAssets || null,
+        // sector: result.summaryProfile?.sector || null,
+        // industry: result.summaryProfile?.industry || null,
+        sector: result.assetProfile?.sector || result.summaryProfile?.sector || null,
+        industry: result.assetProfile?.industry || result.summaryProfile?.industry || null,
       };
+
+      this.logger.log('yahoo data: marketCap=' + data.marketCap + ', pe=' + data.peRatioTTM);
 
       if (Object.values(data).every(v => v === null)) {
         return null;
@@ -196,61 +515,40 @@ export class StockPriceService {
 
       return data;
     } catch (err) {
-      const error = err as Error;
-      this.logger.error('yahoo failed: ' + error.message);
+      console.log(err);
+      this.logger.error('yahoo failed: ' + (err as Error).message);
       return null;
     }
   }
 
-  async parseGoogle(symbol: string) {
+  async parseGoogle(googleSymbol: string) {
     try {
-      const googleSymbol = symbol.replace('.NS', ':NSE').replace('.BO', ':BOM');
-      const url = 'https://www.google.com/finance/quote/' + googleSymbol;
+      const url = `https://www.google.com/finance/quote/${googleSymbol}`;
 
-      const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
-      const config: any = {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-        timeout: 15000,
-      };
+      this.logger.log('hitting google fundamentals: ' + url);
 
-      if (proxyUrl) {
-        config.httpsAgent = new HttpsProxyAgent(proxyUrl);
-        config.proxy = false;
-      }
+      const response = await axios.get(url, this.axiosConfig());
+      // console.log(response);
 
-      const response = await axios.get(url, config);
-      const html = cheerio.load(response.data);
+      // console.log(arguments, googleSymbol, response.config, response.data.data);
 
-      const peText = this.getMetric(html, 'P/E ratio');
-      // const peText = this.getMetric(html, 'PE ratio');
-      // const peText = this.getMetric(html, 'ratio');
-
-      const divText = this.getMetric(html, 'Dividend yield');
-      const prevText = this.getMetric(html, 'Previous close');
-      const dayRange = this.getMetric(html, 'Day range');
-      const yearRange = this.getMetric(html, 'Year range');
-      const marketCap = this.getMetric(html, 'Market cap');
-      // const volume = this.getMetric(html, 'Volume');
-      const volume = this.getMetric(html, 'Avg Volume');
-
-      let pe = null;
-      if (peText) pe = parseFloat(peText.replace(/[^\d.]/g, ''));
-
-      let div = null;
-      if (divText) div = parseFloat(divText.replace(/[^\d.]/g, ''));
-
-      let prev = null;
-      if (prevText) prev = parseFloat(prevText.replace(/[^\d.]/g, ''));
+      const doc = cheerio.load(response.data);
 
       const data = {
-        peRatio: pe,
-        dividendYield: div,
-        prevClose: prev,
-        dayRange: dayRange,
-        yearRange: yearRange,
-        marketCap: marketCap,
-        avgVolume: volume,
+        // peRatio: this.extractNumericValue(this.getGoogleMetric(html, 'PE ratio')),
+        // peRatio: this.extractNumericValue(this.getGoogleMetric(html, 'ratio')),
+        peRatio: this.parseNumber(this.findGoogleMetric(doc, 'P/E ratio')),
+        dividendYield: this.parseNumber(this.findGoogleMetric(doc, 'Dividend yield')),
+        prevClose: this.parseNumber(this.findGoogleMetric(doc, 'Previous close')),
+        dayRange: this.findGoogleMetric(doc, 'Day range'),
+        // yearRange: this.getGoogleMetric(html, '52 week range'),
+        yearRange: this.findGoogleMetric(doc, 'Year range'),
+        marketCap: this.findGoogleMetric(doc, 'Market cap'),
+        // avgVolume: this.getGoogleMetric(html, 'Volume'),
+        avgVolume: this.findGoogleMetric(doc, 'Avg Volume'),
       };
+
+      this.logger.log('google fundamentals: pe=' + data.peRatio + ', marketCap=' + data.marketCap);
 
       if (!Object.values(data).some(v => v !== null)) {
         return null;
@@ -258,28 +556,8 @@ export class StockPriceService {
 
       return data;
     } catch (err) {
-      const error = err as Error;
-      this.logger.error('google failed: ' + error.message);
+      this.logger.error('google fundamentals failed: ' + (err as Error).message);
       return null;
     }
-  }
-
-  private getMetric(html: cheerio.CheerioAPI, label: string): string | null {
-    let value = null;
-
-    // html('div.P6K39c').each((i, elem) => {
-    html('div.mfs7Fc').each((i, elem) => {
-      if (html(elem).text() === label) {
-        // value = html(elem).closest('div.gyFHrc').find('div.P6K39c').text();
-        value = html(elem).closest('div.gyFHrc').find('div.P6K39c').text();
-        return false;
-      }
-    });
-
-    return value;
-  }
-
-  private wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

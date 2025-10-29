@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "users" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "email" TEXT,
@@ -12,8 +12,8 @@ CREATE TABLE "users" (
 
 -- CreateTable
 CREATE TABLE "stocks" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "symbol" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "sector" TEXT NOT NULL,
@@ -53,12 +53,12 @@ CREATE TABLE "stocks" (
 
 -- CreateTable
 CREATE TABLE "price_data" (
-    "id" TEXT NOT NULL,
-    "stockId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "stockId" INTEGER NOT NULL,
     "currentPrice" DOUBLE PRECISION NOT NULL,
     "presentValue" DOUBLE PRECISION NOT NULL,
     "gainLoss" DOUBLE PRECISION NOT NULL,
-    "gainLossPercent" DOUBLE PRECISION NOT NULL,
+    "gainLossPercent" DOUBLE PRECISION,
     "peRatio" DOUBLE PRECISION,
     "dividendYield" DOUBLE PRECISION,
     "dayHigh" DOUBLE PRECISION,
@@ -70,11 +70,30 @@ CREATE TABLE "price_data" (
 
 -- CreateTable
 CREATE TABLE "price_cache" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "symbol" TEXT NOT NULL,
     "currentPrice" DOUBLE PRECISION NOT NULL,
     "peRatio" DOUBLE PRECISION,
     "marketCap" TEXT,
+    "dividendYield" DOUBLE PRECISION,
+    "dayHigh" DOUBLE PRECISION,
+    "dayLow" DOUBLE PRECISION,
+    "avgVolume" TEXT,
+    "peRatioTTM" DOUBLE PRECISION,
+    "priceToBook" DOUBLE PRECISION,
+    "bookValue" DOUBLE PRECISION,
+    "debtToEquity" DOUBLE PRECISION,
+    "revenueTTM" DOUBLE PRECISION,
+    "ebitdaTTM" DOUBLE PRECISION,
+    "profitMargin" DOUBLE PRECISION,
+    "operatingMargin" DOUBLE PRECISION,
+    "returnOnEquity" DOUBLE PRECISION,
+    "returnOnAssets" DOUBLE PRECISION,
+    "sector" TEXT,
+    "industry" TEXT,
+    "prevClose" DOUBLE PRECISION,
+    "dayRange" TEXT,
+    "yearRange" TEXT,
     "cachedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expiresAt" TIMESTAMP(3) NOT NULL,
 

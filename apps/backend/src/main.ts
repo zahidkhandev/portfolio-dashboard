@@ -6,8 +6,17 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { AllExceptionsFilter } from './common/filters/exception.filters';
 import { config } from 'dotenv';
 import { join } from 'path';
+import { setGlobalDispatcher, ProxyAgent } from 'undici';
 
 config({ path: join(__dirname, '../../..', '.env') });
+
+const USE_PROXY = true;
+
+if (USE_PROXY) {
+  const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || 'http://127.0.0.1:8080';
+  console.log('setting global proxy: ' + proxyUrl);
+  setGlobalDispatcher(new ProxyAgent(proxyUrl));
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

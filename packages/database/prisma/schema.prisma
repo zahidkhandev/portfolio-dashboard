@@ -5,14 +5,13 @@ generator client {
   previewFeatures = ["fullTextSearchPostgres"]
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String
   email     String?  @unique
@@ -25,8 +24,8 @@ model User {
 }
 
 model Stock {
-  id               String   @id @default(uuid())
-  userId           String
+  id               Int      @id @default(autoincrement())
+  userId           Int
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   symbol           String
@@ -74,14 +73,14 @@ model Stock {
 }
 
 model PriceData {
-  id              String   @id @default(uuid())
-  stockId         String
+  id              Int      @id @default(autoincrement())
+  stockId         Int
   stock           Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
 
   currentPrice    Float
   presentValue    Float
   gainLoss        Float
-  gainLossPercent Float
+  gainLossPercent Float?
 
   peRatio         Float?
   dividendYield   Float?
@@ -95,13 +94,34 @@ model PriceData {
 }
 
 model PriceCache {
-  id           String   @id @default(uuid())
-  symbol       String   @unique
-  currentPrice Float
-  peRatio      Float?
-  marketCap    String?
-  cachedAt     DateTime @default(now())
-  expiresAt    DateTime
+  id              Int      @id @default(autoincrement())
+  symbol          String   @unique
+  currentPrice    Float
+  peRatio         Float?
+  marketCap       String?
+
+  dividendYield   Float?
+  dayHigh         Float?
+  dayLow          Float?
+  avgVolume       String?
+  peRatioTTM      Float?
+  priceToBook     Float?
+  bookValue       Float?
+  debtToEquity    Float?
+  revenueTTM      Float?
+  ebitdaTTM       Float?
+  profitMargin    Float?
+  operatingMargin Float?
+  returnOnEquity  Float?
+  returnOnAssets  Float?
+  sector          String?
+  industry        String?
+  prevClose       Float?
+  dayRange        String?
+  yearRange       String?
+
+  cachedAt        DateTime @default(now())
+  expiresAt       DateTime
 
   @@index([symbol, expiresAt])
   @@map("price_cache")

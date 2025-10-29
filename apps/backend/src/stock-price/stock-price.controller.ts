@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { StockPriceService } from './stock-price.service';
 
 @Controller('price')
@@ -17,6 +17,26 @@ export class StockPriceController {
   @ApiOperation({ summary: 'Get fundamental data for symbol' })
   getFundamentals(@Param('symbol') symbol: string) {
     return this.stockPriceService.fetchFundamentals(symbol);
+  }
+
+  @Get(':symbol/fundamentals/complete')
+  @ApiOperation({ summary: 'Get complete fundamentals with stored stock data' })
+  getCompleteFundamentals(@Param('symbol') symbol: string, @Body() stockData: any) {
+    return this.stockPriceService.fetchCompleteFundamentals(symbol, stockData);
+  }
+
+  @Get(':symbol/historical')
+  @ApiOperation({ summary: 'Get historical price data' })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  getHistoricalPrices(
+    @Param('symbol') symbol: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    return this.stockPriceService.fetchHistoricalPrices(symbol, start, end);
   }
 
   @Post('batch')

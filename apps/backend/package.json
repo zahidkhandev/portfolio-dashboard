@@ -35,6 +35,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.1",
+    "undici": "^7.16.0",
     "yahoo-finance2": "^3.10.0"
   },
   "devDependencies": {
@@ -48,6 +49,7 @@
     "@types/passport-local": "^1.0.38",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
