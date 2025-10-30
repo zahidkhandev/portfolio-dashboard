@@ -86,10 +86,9 @@ npm run db:studio # open Prisma Studio
 
 npm run docker:db:down # stop database
 
-## Credentials available from seed
+## Default Test Account
 
-username: demo
+After running `npm run db:seed`, login with:
 
-password demo
-
-Make sure to run npm run db:seed in order to seed database with dummy data
+- **Username:** demo
+- **Password:** demo
