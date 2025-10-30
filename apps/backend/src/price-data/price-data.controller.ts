@@ -11,7 +11,7 @@ export class PriceDataController {
   @Post(':stockId/refresh')
   @ApiOperation({ summary: 'Refresh price snapshot for a stock' })
   refreshStock(@GetCurrentUser('id') userId: number, @Param('stockId') stockId: number) {
-    return this.priceDataService.createSnapshot(stockId, userId);
+    return this.priceDataService.refreshSingleStock(stockId, userId);
   }
 
   @Get(':stockId/latest')

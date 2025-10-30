@@ -14,6 +14,8 @@ export class PriceCacheService {
       where: { symbol: symbol },
     });
 
+    // console.log(cached);
+
     if (!cached) {
       return null;
     }

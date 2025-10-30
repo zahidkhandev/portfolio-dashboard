@@ -22,15 +22,14 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   response => response,
   error => {
-    // if (error.response?.status === 401 && typeof window !== 'undefined') {
-    //   localStorage.removeItem('token');
-    //   window.location.href = '/login';
-    // }
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   },
 );
 
-// Auth API
 export const authApi = {
   login: (username: string, password: string) => api.post('/auth/login', { username, password }),
 
@@ -38,12 +37,10 @@ export const authApi = {
     api.post('/auth/register', { username, email, password }),
 };
 
-// Portfolio API
 export const portfolioApi = {
   getMetrics: () => api.get('/portfolio/metrics'),
 };
 
-// Stocks API
 export const stocksApi = {
   getAll: () => api.get('/stocks'),
 
@@ -77,7 +74,6 @@ export const stocksApi = {
   delete: (id: number) => api.delete(`/stocks/${id}`),
 };
 
-// Price Data API
 export const priceDataApi = {
   refreshAll: () => api.post('/price-data/refresh-all'),
 
@@ -91,7 +87,6 @@ export const priceDataApi = {
     }),
 };
 
-// Stock Price API
 export const stockPriceApi = {
   getCurrentPrice: (symbol: string) => api.get(`/price/${symbol}`),
 

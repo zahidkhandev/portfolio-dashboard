@@ -15,8 +15,8 @@ export class PriceDataService {
     this.logger = new Logger(PriceDataService.name);
   }
 
-  async createSnapshot(stockId: number, userId: number) {
-    this.logger.log('creating snapshot for: ' + stockId);
+  async refreshSingleStock(stockId: number, userId: number) {
+    this.logger.log('refreshing stock: ' + stockId);
 
     const stock = await this.prisma.stock.findFirst({
       where: { id: stockId, userId: userId },
@@ -53,7 +53,7 @@ export class PriceDataService {
 
     // console.log('metrics:', metrics);
 
-    const snapshot = await this.prisma.priceData.create({
+    const refreshedData = await this.prisma.priceData.create({
       data: {
         stockId: stock.id,
         currentPrice: priceData.currentPrice,
@@ -67,29 +67,20 @@ export class PriceDataService {
       },
     });
 
-    this.logger.log('snapshot created: ' + snapshot.id);
-
-    // return {
-    //   ...snapshot,
-    //   stock: {
-    //     symbol: stock.symbol,
-    //     name: stock.name,
-    //     sector: stock.sector,
-    //   },
-    // };
+    this.logger.log('created price record ' + refreshedData.id);
 
     return {
-      id: snapshot.id,
-      stockId: snapshot.stockId,
-      currentPrice: snapshot.currentPrice,
-      presentValue: snapshot.presentValue,
-      gainLoss: snapshot.gainLoss,
-      gainLossPercent: snapshot.gainLossPercent,
-      peRatio: snapshot.peRatio,
-      dividendYield: snapshot.dividendYield,
-      dayHigh: snapshot.dayHigh,
-      dayLow: snapshot.dayLow,
-      timestamp: snapshot.timestamp,
+      id: refreshedData.id,
+      stockId: refreshedData.stockId,
+      currentPrice: refreshedData.currentPrice,
+      presentValue: refreshedData.presentValue,
+      gainLoss: refreshedData.gainLoss,
+      gainLossPercent: refreshedData.gainLossPercent,
+      peRatio: refreshedData.peRatio,
+      dividendYield: refreshedData.dividendYield,
+      dayHigh: refreshedData.dayHigh,
+      dayLow: refreshedData.dayLow,
+      timestamp: refreshedData.timestamp,
       stock: {
         symbol: stock.symbol,
         name: stock.name,
@@ -99,7 +90,7 @@ export class PriceDataService {
   }
 
   async getLatest(stockId: number, userId: number) {
-    this.logger.log('getting latest for: ' + stockId);
+    this.logger.log('getting latest record for: ' + stockId);
 
     const stock = await this.prisma.stock.findFirst({
       where: { id: stockId, userId: userId },
@@ -109,50 +100,44 @@ export class PriceDataService {
       throw new ForbiddenException('access denied');
     }
 
-    // const snapshot = await this.prisma.priceData.findFirst({
-    //   where: { stockId: stockId },
-    //   orderBy: { timestamp: 'desc' },
-    // });
-
-    const snapshot = await this.prisma.priceData.findFirst({
+    const updatedData = await this.prisma.priceData.findFirst({
       where: { stockId: stockId },
       orderBy: { timestamp: 'desc' },
       take: 1,
     });
 
-    if (!snapshot) {
-      this.logger.log('no snapshot found');
+    if (!updatedData) {
+      this.logger.log('no data found');
       return null;
     }
 
-    // const ageSeconds = Math.floor((Date.now() - snapshot.timestamp.getTime()) / 1000);
     const now = Date.now();
-    const snapshotTime = snapshot.timestamp.getTime();
-    const ageSeconds = Math.floor((now - snapshotTime) / 1000);
+    const recordTime = updatedData.timestamp.getTime();
+    const ageSeconds = Math.floor((now - recordTime) / 1000);
 
     const isFresh = ageSeconds < 60;
 
     // console.log('age: ' + ageSeconds + 's, fresh: ' + isFresh);
 
     return {
-      id: snapshot.id,
-      stockId: snapshot.stockId,
-      currentPrice: snapshot.currentPrice,
-      presentValue: snapshot.presentValue,
-      gainLoss: snapshot.gainLoss,
-      gainLossPercent: snapshot.gainLossPercent,
-      peRatio: snapshot.peRatio,
-      dividendYield: snapshot.dividendYield,
-      dayHigh: snapshot.dayHigh,
-      dayLow: snapshot.dayLow,
-      timestamp: snapshot.timestamp,
+      id: updatedData.id,
+      stockId: updatedData.stockId,
+      currentPrice: updatedData.currentPrice,
+      presentValue: updatedData.presentValue,
+      gainLoss: updatedData.gainLoss,
+      gainLossPercent: updatedData.gainLossPercent,
+      peRatio: updatedData.peRatio,
+      dividendYield: updatedData.dividendYield,
+      dayHigh: updatedData.dayHigh,
+      dayLow: updatedData.dayLow,
+      timestamp: updatedData.timestamp,
       ageSeconds: ageSeconds,
       isFresh: isFresh,
     };
   }
 
   async getHistory(stockId: number, startDate: Date, endDate: Date, userId: number) {
-    this.logger.log('getting history: ' + stockId);
+    this.logger.log('fetching history for stock: ' + stockId);
     this.logger.log('date range: ' + startDate.toISOString() + ' to ' + endDate.toISOString());
 
     const stock = await this.prisma.stock.findFirst({
@@ -161,15 +146,6 @@ export class PriceDataService {
 
     if (!stock) {
       throw new ForbiddenException('access denied');
-    }
-
-    const startTime = startDate.getTime();
-    const endTime = endDate.getTime();
-    const diffMs = endTime - startTime;
-    const daysDiff = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (daysDiff > 365) {
-      throw new Error('max 365 days allowed');
     }
 
     const endOfDay = new Date(endDate);
@@ -242,7 +218,7 @@ export class PriceDataService {
 
   async bulkRefresh(userId: number) {
     const startTime = Date.now();
-    this.logger.log('bulk refresh for: ' + userId);
+    this.logger.log('bulk refresh for user: ' + userId);
 
     const stocks = await this.prisma.stock.findMany({
       where: { userId: userId },
@@ -261,12 +237,9 @@ export class PriceDataService {
 
     // console.log('symbols:', symbols);
 
-    // const batchPrices = await this.stockPriceService.fetchBatchPrices(symbols);
-    // this.logger.log('fetched ' + batchPrices.length + ' prices');
-
     const batchPrices = [];
 
-    const snapshots = [];
+    const records = [];
     const failedSymbols = [];
 
     for (const symbol of symbols) {
@@ -288,19 +261,7 @@ export class PriceDataService {
           priceData.currentPrice,
         );
 
-        // snapshots.push({
-        //   stockId: stock.id,
-        //   currentPrice: priceData.currentPrice,
-        //   presentValue: metrics.presentValue,
-        //   gainLoss: metrics.gainLoss,
-        //   gainLossPercent: metrics.gainLossPercent,
-        //   peRatio: priceData.peRatio,
-        //   dividendYield: priceData.dividendYield,
-        //   dayHigh: priceData.dayHigh,
-        //   dayLow: priceData.dayLow,
-        // });
-
-        const snapshotData = {
+        const recordData = {
           stockId: stock.id,
           currentPrice: priceData.currentPrice,
           presentValue: metrics.presentValue,
@@ -312,17 +273,17 @@ export class PriceDataService {
           dayLow: priceData.dayLow,
         };
 
-        snapshots.push(snapshotData);
+        records.push(recordData);
       } else {
         failedSymbols.push(stock.symbol);
       }
     }
 
-    // console.log('inserting ' + snapshots.length + ' snapshots');
+    // console.log('inserting ' + records.length + ' records');
 
-    if (snapshots.length > 0) {
+    if (records.length > 0) {
       await this.prisma.priceData.createMany({
-        data: snapshots,
+        data: records,
       });
     }
 
@@ -333,7 +294,7 @@ export class PriceDataService {
     this.logger.log('done in ' + duration);
 
     return {
-      updated: snapshots.length,
+      updated: records.length,
       failed: failedSymbols.length,
       total: stocks.length,
       duration: duration,

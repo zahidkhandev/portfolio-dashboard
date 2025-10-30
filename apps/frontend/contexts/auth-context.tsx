@@ -28,93 +28,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('Checking localStorage for existing session');
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
-    console.log('Token exists:', !!token);
-    console.log('Saved user exists:', !!savedUser);
-
     if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
-      console.log('Session restored');
+      try {
+        setUser(JSON.parse(savedUser));
+        setIsAuthenticated(true);
+      } catch (err) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+      }
+    } else {
+      setIsAuthenticated(false);
     }
     setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
-    console.log('Login attempt for:', username);
-
     try {
       const response = await authApi.login(username, password);
-
-      console.log('Login response:', response.data);
-
       const { accessToken, ...userData } = response.data.data;
-
-      console.log('Extracted token:', accessToken);
-      console.log('Extracted user data:', userData);
 
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      console.log('Token saved to localStorage');
-      console.log('User data saved to localStorage');
-
       setUser(userData);
       setIsAuthenticated(true);
 
-      console.log('Auth state updated, redirecting to dashboard');
       router.push('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
       throw error;
     }
   };
 
   const register = async (username: string, email: string, password: string) => {
-    console.log('Register attempt for:', username);
-
     try {
       const response = await authApi.register(username, email, password);
-
-      console.log('Register response:', response.data);
-
       const { accessToken, ...userData } = response.data.data;
-
-      console.log('Extracted token:', accessToken);
-      console.log('Extracted user data:', userData);
 
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      console.log('Token saved to localStorage');
-      console.log('User data saved to localStorage');
-
       setUser(userData);
       setIsAuthenticated(true);
 
-      console.log('Auth state updated, redirecting to dashboard');
       router.push('/dashboard');
     } catch (error) {
-      console.error('Register error:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
       throw error;
     }
   };
 
   const logout = () => {
-    console.log('Logout initiated');
-
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
-    console.log('Cleared localStorage');
 
     setUser(null);
     setIsAuthenticated(false);
 
-    console.log('Auth state cleared, redirecting to login');
     router.push('/login');
   };
 

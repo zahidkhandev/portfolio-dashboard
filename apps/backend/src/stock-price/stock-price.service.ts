@@ -1,16 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 import { PriceCacheService } from '../cache/cache.service';
 import YahooFinance from 'yahoo-finance2';
-
-const USE_PROXY = true;
 
 @Injectable()
 export class StockPriceService {
   private logger: Logger;
-  private proxyAgent: HttpsProxyAgent<string> | null;
   private readonly defaultHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
   };
@@ -19,13 +15,6 @@ export class StockPriceService {
 
   constructor(private cacheService: PriceCacheService) {
     this.logger = new Logger(StockPriceService.name);
-    this.proxyAgent = null;
-
-    if (USE_PROXY) {
-      const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || 'http://127.0.0.1:8080';
-      this.logger.log('using proxy: ' + proxyUrl);
-      this.proxyAgent = new HttpsProxyAgent(proxyUrl);
-    }
 
     this.yahooFinance = new YahooFinance();
     // this.logger.log('service ready');
@@ -36,19 +25,11 @@ export class StockPriceService {
       headers: customHeaders || this.defaultHeaders,
       timeout: this.defaultTimeout,
     };
-    // console.log(USE_PROXY)
-
-    // console.log(config)
-
-    if (USE_PROXY && this.proxyAgent) {
-      config.httpsAgent = this.proxyAgent;
-      config.proxy = false;
-    }
 
     return config;
   }
 
-  private toGoogleSymbol(symbol: string): string {
+  private convertToGoogleSymbol(symbol: string): string {
     return symbol.replace('.NS', ':NSE').replace('.BO', ':BOM');
   }
 
@@ -66,7 +47,7 @@ export class StockPriceService {
     // html('div.P6K39c').each((i, elem) => {
     cheerio('div.mfs7Fc').each((i, elem) => {
       if (cheerio(elem).text() === label) {
-        // value = html(elem).closest('div.gyFHrc').find('div.P6K39c').text();
+        // value = html(elem).closest('div.mfs7Fc').find('div.P6K39c').text();
         value = cheerio(elem).closest('div.gyFHrc').find('div.P6K39c').text();
         return false;
       }
@@ -161,12 +142,15 @@ export class StockPriceService {
 
   async getPriceFromGoogle(symbol: string) {
     try {
-      const googleSymbol = this.toGoogleSymbol(symbol);
+      const googleSymbol = this.convertToGoogleSymbol(symbol);
       const url = `https://www.google.com/finance/quote/${googleSymbol}`;
 
       this.logger.log('hitting google: ' + url);
 
+      // const response = await axios.get(url);
+
       const response = await axios.get(url, this.axiosConfig());
+
       this.logger.log('got response for ' + symbol);
 
       const doc = cheerio.load(response.data);
@@ -296,7 +280,7 @@ export class StockPriceService {
     }
 
     try {
-      const googleSymbol = this.toGoogleSymbol(symbol);
+      const googleSymbol = this.convertToGoogleSymbol(symbol);
 
       const [googleData, yahooData] = await Promise.all([
         this.parseGoogle(googleSymbol),
@@ -481,6 +465,8 @@ export class StockPriceService {
       const url = `https://www.google.com/finance/quote/${googleSymbol}`;
 
       this.logger.log('hitting google fundamentals: ' + url);
+
+      // const response = await axios.get(url);
 
       const response = await axios.get(url, this.axiosConfig());
       // console.log(response);

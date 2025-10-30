@@ -11,15 +11,15 @@
     }
   },
   "scripts": {
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev --name auto_migration",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:migrate:status": "prisma migrate status",
-    "db:migrate:resolve": "prisma migrate resolve",
-    "db:push": "prisma db push",
-    "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:generate": "dotenv -e ../../.env -- prisma generate",
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate dev --name auto_migration",
+    "db:migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
+    "db:migrate:status": "dotenv -e ../../.env -- prisma migrate status",
+    "db:migrate:resolve": "dotenv -e ../../.env -- prisma migrate resolve",
+    "db:push": "dotenv -e ../../.env -- prisma db push",
+    "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
+    "db:studio": "dotenv -e ../../.env -- prisma studio",
+    "db:seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
     "build": "prisma generate",
     "clean": "rimraf client node_modules .turbo"
   },
@@ -32,6 +32,7 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "bcrypt": "^6.0.0",
-    "@types/bcrypt": "^6.0.0"
+    "@types/bcrypt": "^6.0.0",
+    "dotenv-cli": "^7.4.2"
   }
 }
