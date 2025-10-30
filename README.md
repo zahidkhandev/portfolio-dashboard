@@ -85,3 +85,11 @@ npm run dev:frontend # frontend only
 npm run db:studio # open Prisma Studio
 
 npm run docker:db:down # stop database
+
+## Credentials available from seed
+
+username: demo
+
+password demo
+
+Make sure to run npm run db:seed in order to seed database with dummy data
