@@ -106,7 +106,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Portfolio Overview</h2>
@@ -128,7 +127,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -196,7 +194,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Sector Breakdown */}
       <Card>
         <CardHeader>
           <CardTitle>Sector Breakdown</CardTitle>
@@ -247,7 +244,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Top Gainers and Losers */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-green-200">
           <CardHeader>
@@ -330,7 +326,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Portfolio Fundamentals */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base sm:text-lg">

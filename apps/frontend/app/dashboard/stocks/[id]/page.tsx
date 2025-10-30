@@ -1,4 +1,3 @@
-// apps/frontend/app/dashboard/stocks/[id]/page.tsx
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -103,12 +102,10 @@ export default function StockDetailPage({ params }: StockDetailPageProps) {
       const stockResponse = await stocksApi.getById(stockId);
       const stockData = stockResponse.data.data || stockResponse.data;
 
-      // also fetch current price data for dividend yield and day high/low
       try {
         const currentPriceResponse = await stockPriceApi.getCurrentPrice(stockData.symbol);
         const currentPriceData = currentPriceResponse.data.data || currentPriceResponse.data;
 
-        // merge current price data into stock data
         if (stockData.priceData && stockData.priceData.length > 0) {
           stockData.priceData[0].dividendYield = currentPriceData.dividendYield;
           stockData.priceData[0].dayHigh = currentPriceData.dayHigh;
@@ -188,7 +185,6 @@ export default function StockDetailPage({ params }: StockDetailPageProps) {
       const yahooData = response.data.data || response.data;
 
       if (Array.isArray(yahooData) && yahooData.length > 0) {
-        // Determine date format based on time range
         let dateFormat = 'MMM dd';
         if (range === '3Y' || range === '5Y') {
           dateFormat = 'yyyy';
@@ -256,10 +252,8 @@ export default function StockDetailPage({ params }: StockDetailPageProps) {
     }
   };
 
-  // Custom tick formatter to show only specific years/periods
   const formatXAxisTick = (value: string, index: number) => {
     if (timeRange === '3Y' || timeRange === '5Y') {
-      // For multi-year views, show only first occurrence of each year
       const currentItem = priceHistory[index];
       if (!currentItem) return '';
 
@@ -276,16 +270,15 @@ export default function StockDetailPage({ params }: StockDetailPageProps) {
     return value;
   };
 
-  // Calculate tick interval for cleaner display
   const getTickInterval = () => {
     const dataLength = priceHistory.length;
 
     if (timeRange === '5Y') {
-      return Math.floor(dataLength / 5); // Show ~5 ticks
+      return Math.floor(dataLength / 5);
     } else if (timeRange === '3Y') {
-      return Math.floor(dataLength / 4); // Show ~4 ticks
+      return Math.floor(dataLength / 4);
     } else if (timeRange === '1Y') {
-      return Math.floor(dataLength / 6); // Show ~6 ticks
+      return Math.floor(dataLength / 6);
     } else if (timeRange === '6M') {
       return Math.floor(dataLength / 6);
     } else if (timeRange === '3M') {
@@ -378,7 +371,6 @@ export default function StockDetailPage({ params }: StockDetailPageProps) {
         </Button>
       </div>
 
-      {/* Mobile sector badge */}
       <div className="sm:hidden">
         <Badge variant="outline">{stock.sector}</Badge>
       </div>

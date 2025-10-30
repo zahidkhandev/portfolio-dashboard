@@ -1,4 +1,3 @@
-// apps/frontend/app/dashboard/stocks/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -53,7 +52,6 @@ export default function StocksPage() {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [error, setError] = useState('');
 
-  // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -265,7 +263,6 @@ export default function StocksPage() {
           </div>
         </div>
 
-        {/* Desktop Table */}
         <Card className="overflow-hidden hidden lg:block">
           <div className="overflow-x-auto">
             <Table>
@@ -423,7 +420,6 @@ export default function StocksPage() {
           </div>
         </Card>
 
-        {/* Mobile/Tablet Cards */}
         <div className="grid gap-4 lg:hidden">
           {stocks.length === 0 ? (
             <Card className="p-8">
@@ -526,7 +522,6 @@ export default function StocksPage() {
         </div>
       </div>
 
-      {/* Add Stock Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <form onSubmit={handleSubmitAdd}>
@@ -633,7 +628,6 @@ export default function StocksPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Stock Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <form onSubmit={handleSubmitEdit}>
@@ -735,7 +729,6 @@ export default function StocksPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

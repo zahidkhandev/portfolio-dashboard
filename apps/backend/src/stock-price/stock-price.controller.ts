@@ -19,12 +19,6 @@ export class StockPriceController {
     return this.stockPriceService.fetchFundamentals(symbol);
   }
 
-  @Get(':symbol/fundamentals/complete')
-  @ApiOperation({ summary: 'Get complete fundamentals with stored stock data' })
-  getCompleteFundamentals(@Param('symbol') symbol: string, @Body() stockData: any) {
-    return this.stockPriceService.fetchCompleteFundamentals(symbol, stockData);
-  }
-
   @Get(':symbol/historical')
   @ApiOperation({ summary: 'Get historical price data' })
   @ApiQuery({ name: 'startDate', required: false, type: String })
@@ -37,11 +31,5 @@ export class StockPriceController {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     return this.stockPriceService.fetchHistoricalPrices(symbol, start, end);
-  }
-
-  @Post('batch')
-  @ApiOperation({ summary: 'Get prices for multiple symbols' })
-  getBatchPrices(@Body() body: { symbols: string[] }) {
-    return this.stockPriceService.fetchBatchPrices(body.symbols);
   }
 }

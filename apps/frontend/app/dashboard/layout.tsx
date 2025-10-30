@@ -1,4 +1,3 @@
-// apps/frontend/app/dashboard/layout.tsx
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
@@ -33,7 +32,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navigation */}
       <nav className="border-b bg-white sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
@@ -42,7 +40,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 Portfolio Dashboard
               </h1>
 
-              {/* Desktop Navigation */}
               <div className="hidden md:flex gap-2">
                 <Link href="/dashboard">
                   <Button variant={pathname === '/dashboard' ? 'default' : 'ghost'} size="sm">
@@ -62,7 +59,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
 
-            {/* Desktop User Menu */}
             <div className="hidden sm:flex items-center gap-3">
               <span className="text-sm text-slate-600">Welcome, {user?.username || 'User'}</span>
               <Button variant="outline" size="sm" onClick={logout}>
@@ -71,7 +67,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
             </div>
 
-            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -82,7 +77,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Button>
           </div>
 
-          {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden mt-4 pt-4 border-t space-y-2">
               <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
@@ -119,7 +113,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">{children}</main>
     </div>
   );

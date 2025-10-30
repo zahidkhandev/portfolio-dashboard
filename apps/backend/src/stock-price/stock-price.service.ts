@@ -159,7 +159,6 @@ export class StockPriceService {
   //   }
   // }
 
-  // apps/backend/src/stock-price/stock-price.service.ts - update getPriceFromGoogle
   async getPriceFromGoogle(symbol: string) {
     try {
       const googleSymbol = this.toGoogleSymbol(symbol);
@@ -236,33 +235,6 @@ export class StockPriceService {
       this.logger.error('google failed: ' + error.message);
       return null;
     }
-  }
-
-  async fetchCompleteFundamentals(symbol: string, stockData: any) {
-    const priceData = await this.fetchCurrentPrice(symbol);
-    const fundamentalData = await this.fetchFundamentals(symbol);
-
-    return {
-      ...priceData,
-      ...fundamentalData,
-      stockFundamentals: {
-        ebitdaTTM: stockData.ebitdaTTM,
-        ebitdaPercent: stockData.ebitdaPercent,
-        revenueTTM: stockData.revenueTTM,
-        pat: stockData.pat,
-        patPercent: stockData.patPercent,
-        cfoMarch24: stockData.cfoMarch24,
-        cfo5Years: stockData.cfo5Years,
-        freeCashFlow5Years: stockData.freeCashFlow5Years,
-        revenueGrowth3Y: stockData.revenueGrowth3Y,
-        ebitdaGrowth3Y: stockData.ebitdaGrowth3Y,
-        profitGrowth3Y: stockData.profitGrowth3Y,
-        marketCapGrowth3Y: stockData.marketCapGrowth3Y,
-        priceToSales: stockData.priceToSales,
-        cfoToEbitda: stockData.cfoToEbitda,
-        cfoToPat: stockData.cfoToPat,
-      },
-    };
   }
 
   async fetchHistoricalPrices(symbol: string, startDate?: Date, endDate?: Date) {
@@ -345,23 +317,6 @@ export class StockPriceService {
       this.logger.error(`fundamentals failed: ${err.message}`);
       return null;
     }
-  }
-
-  async fetchBatchPrices(symbols: string[]) {
-    this.logger.log('batch fetch for ' + symbols.length + ' stocks');
-    const results = [];
-
-    for (const symbol of symbols) {
-      const priceData = await this.fetchCurrentPrice(symbol);
-      if (priceData) {
-        results.push(priceData);
-      }
-      // await this.wait(100);
-      await new Promise(r => setTimeout(r, 200));
-    }
-
-    this.logger.log('batch done: ' + results.length + '/' + symbols.length);
-    return results;
   }
 
   async getFromCache(symbol: string) {

@@ -9,7 +9,6 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor
 api.interceptors.request.use(config => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
@@ -20,7 +19,6 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// Response interceptor
 api.interceptors.response.use(
   response => response,
   error => {
@@ -108,13 +106,4 @@ export const stockPriceApi = {
     }),
 
   getBatchPrices: (symbols: string[]) => api.post('/price/batch', { symbols }),
-};
-
-// Cache API
-export const cacheApi = {
-  getCachedPrice: (symbol: string) => api.get(`/cache/${symbol}`),
-
-  clearSymbolCache: (symbol: string) => api.delete(`/cache/${symbol}`),
-
-  clearAllCache: () => api.delete('/cache'),
 };

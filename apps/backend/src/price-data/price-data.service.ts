@@ -151,7 +151,6 @@ export class PriceDataService {
     };
   }
 
-  // apps/backend/src/price-data/price-data.service.ts - fix getHistory query
   async getHistory(stockId: number, startDate: Date, endDate: Date, userId: number) {
     this.logger.log('getting history: ' + stockId);
     this.logger.log('date range: ' + startDate.toISOString() + ' to ' + endDate.toISOString());
@@ -262,11 +261,22 @@ export class PriceDataService {
 
     // console.log('symbols:', symbols);
 
-    const batchPrices = await this.stockPriceService.fetchBatchPrices(symbols);
-    this.logger.log('fetched ' + batchPrices.length + ' prices');
+    // const batchPrices = await this.stockPriceService.fetchBatchPrices(symbols);
+    // this.logger.log('fetched ' + batchPrices.length + ' prices');
+
+    const batchPrices = [];
 
     const snapshots = [];
     const failedSymbols = [];
+
+    for (const symbol of symbols) {
+      const priceData = await this.stockPriceService.fetchCurrentPrice(symbol);
+      if (priceData) {
+        batchPrices.push(priceData);
+      }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    this.logger.log('fetched ' + batchPrices.length + ' prices');
 
     for (const stock of stocks) {
       const priceData = batchPrices.find(p => p.symbol === stock.symbol);

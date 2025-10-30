@@ -1,4 +1,3 @@
-// portfolio.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';

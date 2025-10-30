@@ -20,7 +20,6 @@ export class PriceDataController {
     return this.priceDataService.getLatest(stockId, userId);
   }
 
-  // price-data.controller.ts
   @Get(':stockId/history')
   @ApiOperation({ summary: 'Get historical price snapshots for date range' })
   async getHistory(

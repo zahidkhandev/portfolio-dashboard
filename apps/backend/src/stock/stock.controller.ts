@@ -45,22 +45,4 @@ export class StockController {
   deleteStock(@GetCurrentUser('id') userId: number, @Param('id') id: string) {
     return this.stockService.deleteStock(userId, +id);
   }
-
-  @Post(':id/fundamentals')
-  @ApiOperation({ summary: 'Update fundamentals for a specific stock' })
-  updateStockFundamentals(@GetCurrentUser('id') userId: number, @Param('id') id: string) {
-    return this.stockService.updateStockFundamentals(userId, +id);
-  }
-
-  @Post('fundamentals/bulk-update')
-  @ApiOperation({ summary: 'Bulk update fundamentals for all stocks' })
-  bulkUpdateFundamentals(@GetCurrentUser('id') userId: number) {
-    return this.stockService.bulkUpdateFundamentals(userId);
-  }
-
-  @Post('fundamentals/import')
-  @ApiOperation({ summary: 'Import fundamentals from CSV data' })
-  importFundamentals(@GetCurrentUser('id') userId: number, @Body() data: ImportFundamentalsDto[]) {
-    return this.stockService.importFundamentalsFromCSV(userId, data);
-  }
 }

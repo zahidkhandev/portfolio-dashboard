@@ -5,7 +5,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './common/guards/auth';
 import { StockModule } from './stock/stock.module';
-import { PriceCacheModule } from './cache/cache.module';
 import { StockPriceModule } from './stock-price/stock-price.module';
 import { PriceDataModule } from './price-data/price-data.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
@@ -21,7 +20,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     PrismaModule,
     AuthModule,
     StockModule,
-    PriceCacheModule,
     StockPriceModule,
     PriceDataModule,
     PortfolioModule,
