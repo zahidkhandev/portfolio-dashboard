@@ -2,7 +2,16 @@
 
 Full-stack portfolio management app. NestJS backend, Next.js frontend, PostgreSQL database.
 
-## Setup
+## Quick Start
+
+**Windows:** Run `.\setup.bat` in PowerShell to install dependencies, setup database, and start the app.
+
+**Mac/Linux:** Run the following command to make the script executable, then run it:
+
+- chmod +x setup.sh
+- ./setup.sh
+
+## Manual Setup
 
 ### Prerequisites
 
